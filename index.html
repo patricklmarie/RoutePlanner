@@ -3091,15 +3091,13 @@
     // Query Nominatim to geolocate an address
     //-----------------------------------------
     async function fetchCoordinatesWithNominatim(address) {
-        // Base Nominatim address
-        const baseURL = "https://nominatim.openstreetmap.org/search?q=" + address +
+        // Nominatim's URL
+        const url = "https://nominatim.openstreetmap.org/search?q=" + address +
             "&format=json&polygon_geojson=1&dedupe&limit=10";
-        // URL to be used, passing through a public CORS proxy
-        const url = "https://corsproxy.io/?" + encodeURIComponent(baseURL);
 
         try {
             // Fetch Nominatim
-            const response = await fetch(baseURL);
+            const response = await fetch(url);
 
             // When Nominatim query failed
             if (!response.ok) {
@@ -3489,4 +3487,5 @@ Pour les 4 premiers styles de navigation, le parcours est calculé à l'aide du 
     </script>
 </body>
 </html>
+
 
