@@ -3099,7 +3099,7 @@
 
         try {
             // Fetch Nominatim
-            const response = await fetch(url);
+            const response = await fetch(baseURL);
 
             // When Nominatim query failed
             if (!response.ok) {
@@ -3489,3 +3489,4 @@ Pour les 4 premiers styles de navigation, le parcours est calculé à l'aide du 
     </script>
 </body>
 </html>
+
