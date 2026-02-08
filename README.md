@@ -1,4 +1,4 @@
-<h1>GPX Route Planner example</h1>
+<h1>GPX Route Planner</h1>
 <p>GPX_Route_Planner.html is a small <strong>route-planning application</strong>. It is designed to enable hikers, cyclists, and even motorists to plan their trip by plotting a route on a map.</p>
 <p>It is also a <strong>GPX editor</strong>: the route can be exported as a GPX file and then used with GPS devices or mobile navigation apps such as OsmAnd or Locus.</p>
 <p>The entire application is contained in a single HTML file and can be run simply by opening it in a web browser.</p>
