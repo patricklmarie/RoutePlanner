@@ -2773,10 +2773,10 @@
             return;     // One operation at a time only
 
         // Create a new file by downloading it
-        const blob = new Blob([makeGPX("GPX_Route_Planner_export")], { type: "application/gpx+xml" });
+        const blob = new Blob([makeGPX("GPX Route Planner export")], { type: "application/gpx+xml" });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = "route_export.gpx";    // Set filename
+        a.download = "GPX_Route_Planner_export.gpx";    // Set filename
         a.click();
         URL.revokeObjectURL(a.href);
         console.log(context.language === 'EN' ? "Route exported as GPX file (in default download directory)" : 
@@ -3589,5 +3589,6 @@ Pour les quatre premiers modes de voyage, le parcours est calculé à l'aide du 
     </script>
 </body>
 </html>
+
 
 
