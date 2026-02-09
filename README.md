@@ -20,3 +20,4 @@ The browserâ€™s <strong>Geolocation API</strong> is used to determine the userâ€
 <p>A key feature of this application is its extensive use of Leaflet <strong>event handlers</strong> attached to various objects: the map, circle markers, and polylines. Depending on the context (stage editing mode or supervision mode), the required event handlers differ, and most of them cannot be assigned once and for all. Instead, they must be <strong>registered</strong>, in order to be dynamically <strong>retrieved</strong>, <strong>removed</strong>, and <strong>replaced</strong> by others as the context changes.</p>
 <h2>Live demo</h2>
 <p>https://yourusername.github.io/your-repo/</p>
+<img width="1919" height="919" alt="image" src="https://github.com/user-attachments/assets/47730927-e211-4993-bbf6-30d31706b25c" />
