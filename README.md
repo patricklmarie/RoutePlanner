@@ -13,7 +13,7 @@ The browserâ€™s <strong>Geolocation API</strong> is used to determine the userâ€
 <li><strong>One or more stages</strong>. A stage represents a journey planned to be completed in one go or in a single day. It consists of:
 <ul>
 <li><strong>A starting point, an end point, and optional waypoints</strong>. These points are rendered on the map using Leaflet <strong>circle markers</strong>.</li>
-<li><strong>One or more sections</strong>. A section is a path (curved or straight) connecting two points of a stage. Sections are rendered on the map using Leaflet <strong>polylines</strong>. Their position and shape are calculated using BRouter or by drawing a straight segment, depending on the selected option.</li>
+<li><strong>One or more sections</strong>. A section is a path (curved or straight) connecting two points of a stage. Sections are rendered on the map using Leaflet <strong>polylines</strong>. Their position and shape are calculated using <strong>BRouter</strong> or by drawing a straight segment, depending on the selected option.</li>
 </ul>
 </ul>
 <h2>Event-driven design</h2>
