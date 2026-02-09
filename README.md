@@ -4,7 +4,7 @@
 <h2>Overview</h2>
 <p>GPX Route Planner is a small <strong>route planning application</strong>. It is designed to enable hikers, cyclists, and even motorists to plan their trips by plotting a route on a map.</p>
 <p>It is also a <strong>GPX editor</strong>: the route can be exported as a GPX file and then used with GPS devices or mobile navigation apps such as OsmAnd or Locus.</p>
-<p>The entire application is contained in a single HTML file (GPX_Route_Planner.html) and can be run simply by opening it in a web browser.</p>
+<p>The application is written in JavaScript, contained in a single HTML file (GPX_Route_Planner.html), and can be run simply by opening this file in a web browser.</p>
 <p>This application is entirely based on open-source technologies part of the <strong>OpenStreetMap</strong> ecosystem: <strong>Leaflet</strong> to render the map and the route, <strong>Nominatim</strong> to locate places from their addresses, <strong>BRouter</strong> to plan routes between locations. 
 The browser’s <strong>Geolocation API</strong> is used to determine the user’s position.</p>
 <h2>Route structure</h2>
