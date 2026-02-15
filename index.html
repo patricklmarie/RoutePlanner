@@ -3018,26 +3018,11 @@
         wrapper.appendChild(status);
 
         // Create submit button
-        const button = document.createElement('button');
-        button.textContent = 'Set';
-        button.style.marginLeft = '8px';
-        wrapper.appendChild(button);
+        const submitButton = document.createElement('button');
+        submitButton.textContent = context.language === 'EN' ? 'Set' : 'Attribuer';
+        submitButton.style.marginLeft = '8px';
+        wrapper.appendChild(submitButton);
 
-        // Escape key handler just for this wrapper
-        function escKeyHandler(e) {
-            if ((e.key || '').toLowerCase() === 'escape') {
-                L.DomEvent.stopPropagation(e);  // Do not propagate event to map and document
-
-                // Remove wrapper from DOM
-                wrapper.remove();
-                // Remove this ESC listener
-                document.removeEventListener('keydown', escKeyHandler);
-
-                context.operationWithButtonInProcess = false;   // Stop blocking the other operations
-            }
-        }
-        document.addEventListener('keydown', escKeyHandler);
-        
         // Process the entered name
         function applyName(name) {
             stage.name = name;
@@ -3045,10 +3030,12 @@
             status.textContent = context.language === 'EN' ? 'Name set' : 'Nom attribué';
 
             // Close the small UI:
-            button.removeEventListener('click', submitHandler);
+            submitButton.removeEventListener('click', submitHandler);
+            cancelButton.removeEventListener('click', cancelHandler);
             input.removeEventListener('keydown', keydownHandler);
-            wrapper.remove();
             document.removeEventListener('keydown', escKeyHandler);
+            wrapper.remove();
+            
             context.operationWithButtonInProcess = false;   // Stop blocking the other operations
 
             // Update information popup
@@ -3066,17 +3053,54 @@
             }
             applyName(value);
         }
-        button.addEventListener('click', submitHandler);
+        submitButton.addEventListener('click', submitHandler);
 
         // Keydown handler
         function keydownHandler(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+
                 submitHandler();
             }
         }
         input.addEventListener('keydown', keydownHandler);
                     
+        // Create submit button
+        const cancelButton = document.createElement('button');
+        cancelButton.textContent = context.language === 'EN' ? 'Cancel' : 'Annuler';
+        cancelButton.style.marginLeft = '8px';
+        wrapper.appendChild(cancelButton);
+
+        // Cancel handler
+        function cancelHandler() {
+            // Close the small UI:
+            submitButton.removeEventListener('click', submitHandler);
+            cancelButton.removeEventListener('click', cancelHandler);
+            input.removeEventListener('keydown', keydownHandler);
+            document.removeEventListener('keydown', escKeyHandler);
+            wrapper.remove();
+            
+            context.operationWithButtonInProcess = false;   // Stop blocking the other operations
+        }
+        cancelButton.addEventListener('click', cancelHandler);
+
+        // Escape key handler just for this wrapper
+        function escKeyHandler(e) {
+            if ((e.key || '').toLowerCase() === 'escape') {
+                L.DomEvent.stopPropagation(e);  // Do not propagate event to map and document
+
+                // Remove handlers and wrapper
+                submitButton.removeEventListener('click', submitHandler);
+                cancelButton.removeEventListener('click', cancelHandler);
+                input.removeEventListener('keydown', keydownHandler);
+                document.removeEventListener('keydown', escKeyHandler);
+                wrapper.remove();
+
+                context.operationWithButtonInProcess = false;   // Stop blocking the other operations
+            }
+        }
+        document.addEventListener('keydown', escKeyHandler);
+        
         // Finally, add the wrapper to the page
         document.body.appendChild(wrapper);
 
@@ -3514,7 +3538,7 @@
             for (let stage of stages) {
                 body = body + `\n    <trk>`;    // Create new track
                 if (stage.name && stage.name.length > 0)
-                    body = body + `\n        <name>"${stage.name}"</name>`;     // Add name
+                    body = body + `\n        <name>${stage.name}</name>`;     // Add name
                 if (stage.distance != null && stage.ascent != null && stage.descent != null) {
                     // Add distance, ascent, descent as extensions
                     body = body + `\n        <extensions>`;
@@ -3593,10 +3617,11 @@
             if ((e.key || '').toLowerCase() === 'escape') {
                 L.DomEvent.stopPropagation(e);  // Do not propagate event to map and document
                 
-                // Remove wrapper from DOM
-                wrapper.remove();
-                // Remove this ESC listener
+                // Remove handlers and wrapper
                 document.removeEventListener('keydown', escKeyHandler);
+                input.removeEventListener('change', changeHandler);     // Remove event handler
+                cancelButton.removeEventListener('click', cancelHandler);                // Remove wrapper from DOM
+                wrapper.remove();
 
                 context.operationWithButtonInProcess = false;
             }
@@ -3729,11 +3754,11 @@
                     console.log(context.language === 'EN' ? "Route imported from GPX file '" : "Itinéraire importé du fichier GPX '" + file.name + "'");
                 });
                 
-                // Remove the whole wrapper div from the DOM
-                input.removeEventListener('change', changeHandler);     // Remove event handler
-                wrapper.remove();
-                 // And remove ESC listener since wrapper is gone
+                // Remove handlers and wrapper
+                input.removeEventListener('change', changeHandler);
+                cancelButton.removeEventListener('click', cancelHandler);                
                 document.removeEventListener('keydown', escKeyHandler);
+                wrapper.remove();
 
                 // Focus the map on the route
                 let bounds = L.latLngBounds([]);    // Initialize an array of all polyline bounds
@@ -3755,6 +3780,24 @@
             }
         }
         input.addEventListener('change', changeHandler);       // Add event handler to file input
+
+        // Create submit button
+        const cancelButton = document.createElement('button');
+        cancelButton.textContent = context.language === 'EN' ? 'Cancel' : 'Annuler';
+        cancelButton.style.marginLeft = '8px';
+        wrapper.appendChild(cancelButton);
+
+        // Cancel handler
+        function cancelHandler() {
+            // Close the small UI:
+            input.removeEventListener('change', changeHandler);     // Remove event handler
+            cancelButton.removeEventListener('click', cancelHandler);
+            document.removeEventListener('keydown', escKeyHandler);
+            wrapper.remove();
+            
+            context.operationWithButtonInProcess = false;   // Stop blocking the other operations
+        }
+        cancelButton.addEventListener('click', cancelHandler);
 
         // Finally, add the wrapper to the page
         document.body.appendChild(wrapper);
@@ -4144,8 +4187,8 @@
                 stage.distance > 0 
                 ? `<b>Distance: </b> ${
                     context.metricUnits 
-                        ? `${stage.distance.toFixed(3)} km` 
-                        : `${(stage.distance/1.609344).toFixed(3)} mi`
+                        ? `${context.language === 'EN' ? stage.distance.toFixed(3) : stage.distance.toFixed(3).replace('.', ',')} km` 
+                        : `${context.language === 'EN' ? (stage.distance/1.609344).toFixed(3) : (stage.distance/1.609344).toFixed(3).replace('.', ',')} mi`
                 }<br>` 
                 : ''
             }
