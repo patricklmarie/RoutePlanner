@@ -357,6 +357,15 @@
         frLabel.style.alignItems = 'center';
         frLabel.style.gap = '6px';
 
+         // Disable when other operation in process
+        enRadio.addEventListener('click', function (e) {
+            if (context.operationWithButtonInProcess) {
+                e.preventDefault();
+        
+                return;
+            }
+        });
+
          // Handle changes
         enRadio.addEventListener('change', () => {
             if (enRadio.checked) {
@@ -379,6 +388,15 @@
                         showInfoPopup(stages[i]);
                     }
                 }
+            }
+        });
+
+         // Disable when other operation in process
+        frRadio.addEventListener('click', function (e) {
+            if (context.operationWithButtonInProcess) {
+                e.preventDefault();
+        
+                return;
             }
         });
 
@@ -461,6 +479,13 @@
             select.value = context.baseMap;
         }
 
+        // Disable when other operation in process
+        select.addEventListener('mousedown', e => {
+            if (context.operationWithButtonInProcess) {
+                e.preventDefault();
+            }
+        });
+
         // Handle selection changes
         select.onchange = function () {
             Object.values(baseMaps).forEach(layer => {
@@ -505,6 +530,13 @@
 
         // Restore selection
         select.value = context.routerProfile;
+
+        // Disable when other operation in process
+        select.addEventListener('mousedown', e => {
+            if (context.operationWithButtonInProcess) {
+                e.preventDefault();
+            }
+        });
 
         // Handle selection changes
         select.onchange = function () {
@@ -556,8 +588,19 @@
         imperLabel.appendChild(imperRadio);
         imperLabel.append(context.language === 'EN' ? ' Imperial' : ' Impériales');
 
+         // Disable when other operation in process
+        metricRadio.addEventListener('click', function (e) {
+            if (context.operationWithButtonInProcess) {
+                e.preventDefault();
+        
+                return;
+            }
+        });
+
          // Handle changes
         metricRadio.addEventListener('change', () => {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             if (metricRadio.checked) {
                 context.metricUnits = true;
 
@@ -574,8 +617,19 @@
             }
         });
 
+         // Disable when other operation in process
+        imperRadio.addEventListener('click', function (e) {
+            if (context.operationWithButtonInProcess) {
+                e.preventDefault();
+        
+                return;
+            }
+        });
+
         // Handle changes
         imperRadio.addEventListener('change', () => {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             if (imperRadio.checked) {
                 context.metricUnits = false;
                 
@@ -643,8 +697,19 @@
         noLabel.appendChild(noRadio);
         noLabel.append(context.language === 'EN' ? ' No' : ' Non');
 
+         // Disable when other operation in process
+        yesRadio.addEventListener('click', function (e) {
+            if (context.operationWithButtonInProcess) {
+                e.preventDefault();
+        
+                return;
+            }
+        });
+
          // Handle changes
         yesRadio.addEventListener('change', () => {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             if (yesRadio.checked) {
                 context.displayInfo = true;
 
@@ -659,8 +724,19 @@
             }
         });
 
+         // Disable when other operation in process
+        noRadio.addEventListener('click', function (e) {
+            if (context.operationWithButtonInProcess) {
+                e.preventDefault();
+        
+                return;
+            }
+        });
+
         // Handle changes
         noRadio.addEventListener('change', () => {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             if (noRadio.checked) {
                 context.displayInfo = false;
                 
@@ -717,6 +793,8 @@
 
         // Define submit handler (for creating a new stage)
         async function newStgHandler() {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             setEnv4NonEdt();    // Finish editing the current stage
 
             setEnv4EdtStg(null);    // Start editing a new stage
@@ -744,6 +822,8 @@
 
         // Define submit handler (for exporting to a GPX file)
         async function importGPXHandler() {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             importRouteFromGPX();
         }
         importGPXButton.addEventListener('click', importGPXHandler);  // Associate submit handler with button
@@ -769,6 +849,8 @@
 
         // Define submit handler (for exporting to a GPX file)
         async function exportGPXHandler() {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             exportRouteToGPX();
         }
         exportGPXButton.addEventListener('click', exportGPXHandler);  // Associate submit handler with button
@@ -794,6 +876,8 @@
 
         // Define submit handler (for resetting the route)
         async function resetRteHandler() {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             if (confirm(context.language === 'EN' ? "Are you sure you want to reset the route?" : "Etes-vous sûr de vouloir réinitialiser l'itinéraire ?")) 
                 resetRoute();
         }
@@ -936,8 +1020,8 @@
         if (context.initializationInProcess) {
             // Set permanent event listeners on doc for key pressed (one time for all time)
             function doc_keydown(e) {    
-                if (context.operationWithButtonInProcess) return;
-
+                if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
                 const key = (e.key || '').toLowerCase();
 
                 // If the user is typing in an input or textarea, ignore shortcuts
@@ -969,6 +1053,8 @@
 
         // Set event listener on map for double-click
         function map_dblclick(e) {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             setEnv4EdtStg(null);    // Start editing a new stage
         }
         map.addEventListener('dblclick', map_dblclick);     // Add listener to map
@@ -1237,6 +1323,8 @@
 
         // Define submit handler (for setting the stage's name)
         async function setNameHandler() {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             setStgName();
         }
         setNameButton.addEventListener('click', setNameHandler);  // Associate submit handler with button
@@ -1262,6 +1350,8 @@
 
         // Define submit handler (for reverse stage direction)
         async function revStgHandler() {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             reverseStage();
         }
         revStgButton.addEventListener('click', revStgHandler);  // Associate submit handler with button
@@ -1288,6 +1378,8 @@
 
         // Define submit handler (for split stage)
         async function splitStgHandler() {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             //alert(context.language === 'EN' ? 'Will be impleted soon!' : 'Sera implémenté prochainement !');
             const svgScissors = `
             <svg xmlns="http://www.w3.org/2000/svg"
@@ -1375,6 +1467,8 @@
 
         // Define submit handler (for deleting the stage)
         async function delStgHandler() {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             if (confirm(context.language === 'EN' ? "Are you sure you want to delete the edited stage?" : "Etes-vous sûr de vouloir supprimer l'étape en cours d'édition ?")) 
                 deleteStg(context.editedStage);
         }
@@ -1401,6 +1495,8 @@
 
         // Define submit handler (for quitting edit mode)
         async function quitEdtHandler() {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             quitEditStage();
         }
         quitEdtButton.addEventListener('click', quitEdtHandler);  // Associate submit handler with button
@@ -1412,6 +1508,8 @@
     // Quit edit stage
     //-----------------
     function quitEditStage() {
+        if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+
         if (context.editedStage != null && stages[context.editedStage].points.length === 0)
             stages.splice(context.editedStage, 1);  // Remove empty stage
 
@@ -1807,6 +1905,8 @@
 
         // On real pan start
         function map_dragstart(e) {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             map.getContainer().style.cursor = 'grabbing';
             context.suppressNextClick = true;
         }
@@ -1815,6 +1915,8 @@
 
         // On pan end
         function map_dragend(e) {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             map.getContainer().style.cursor = 'crosshair';
             context.suppressNextClick = false;
         }
@@ -1822,6 +1924,8 @@
         mapEvtList.push({ target: map, type: 'dragend', handler: map_dragend });    //Register listener
 
         function map_mousedown(e) {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             longPressTriggered = false;
 
             holdTimer = setTimeout(() => {
@@ -1834,6 +1938,8 @@
         mapEvtList.push({ target: map, type: 'mousedown', handler: map_mousedown });    //Register listener
 
         function map_mouseup(e) {
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
             clearTimeout(holdTimer);
             map.getContainer().style.cursor = 'crosshair';
             //context.suppressNextClick = false;
@@ -1980,6 +2086,8 @@
                 const initPolylineLatlngs = sectionRef.polyline.getLatLngs();   // Save initial section's points
 
                 const move = ev => {    // Event: mouse cursor moved
+                    if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+
                     const p = map.mouseEventToContainerPoint(ev);
                     if (!isDragging && p.distanceTo(startPoint) < DRAG_THRESHOLD) {
                         return;     // Move is too small
@@ -2019,6 +2127,8 @@
                 };
 
                 const up = async ev => {    // Event: mouse button up
+                    if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+    
                     if (!isDragging) {  // Ignore if no dragging is in process
                         cleanupDrag();
                         return;
@@ -2408,6 +2518,8 @@
                     initNextPolylineLatlngs = stageRef.sections[jRef].polyline.getLatLngs(); 
 
                 const move = ev => {    // Event: mouse cursor moved
+                    if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+
                     const p = map.mouseEventToContainerPoint(ev);
                     if (!isDragging && p.distanceTo(startPoint) < DRAG_THRESHOLD) {
                         return;     // Moved distance too small: still regarded as a click
@@ -2439,6 +2551,8 @@
                 };
 
                 const up = async ev => {    // Event: mouse button up
+                    if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+
                     if (!isDragging) {
                         cleanupDrag();
                         return;
@@ -2912,6 +3026,8 @@
         // Escape key handler just for this wrapper
         function escKeyHandler(e) {
             if ((e.key || '').toLowerCase() === 'escape') {
+                L.DomEvent.stopPropagation(e);  // Do not propagate event to map and document
+
                 // Remove wrapper from DOM
                 wrapper.remove();
                 // Remove this ESC listener
@@ -3011,6 +3127,8 @@
 
             // Define submit handler (button)
             async function submitHandler() {
+                if (context.operationWithButtonInProcess) return;
+
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(setPositionOnMap, handleGeolocationError);
                 } else {
@@ -3166,6 +3284,8 @@
 
             // Define reset handler (button or Escape)
             async function resetHandler() {
+                if (context.operationWithButtonInProcess) return;
+                
                 let container = wrapper.querySelector('#search-results');   // Search for the places found container (if any)
                 if (container) 
                     container.remove(); // Remove the results
@@ -3182,6 +3302,8 @@
                     
             // Submit handler (button or Enter)
             async function submitHandler() {
+                if (context.operationWithButtonInProcess) return;
+                
                 for (const { target, type, handler } of docLocFindEvtList)  // Remove events listeners associated with places found
                     target.removeEventListener(type, handler);
                 docLocFindEvtList.splice(0);  // Clear registered event listeners
@@ -3228,6 +3350,8 @@
                             }
 
                             L.DomEvent.on(div, 'click', (e) => {    // Define click event handler
+                                if (context.operationWithButtonInProcess) return;
+                
                                 L.DomEvent.stop(e);     // Stop map interaction
 
                                 selectItem(index);  // Register the selected location item
@@ -3239,6 +3363,8 @@
 
                     // Escape, arrow down and arrow up keys handler just for this wrapper
                     function keydownDocHandler(e) {
+                        if (context.operationWithButtonInProcess) return;
+                
                         if ((e.key || '').toLowerCase() === 'escape') {
                             L.DomEvent.stop(e);     // Stop map interaction
                             
@@ -3316,6 +3442,8 @@
             // Keydown handler (another way to submit the location search)
             function keydownInputHandler(e) {
                 if (e.key === 'Enter') {
+                    if (context.operationWithButtonInProcess) return;
+                
                     L.DomEvent.stop(e);
                     submitHandler();
                 }
@@ -3384,44 +3512,44 @@
             // Create body
             let body = ``;
             for (let stage of stages) {
-                body = body + `\n        <trk>`;    // Create new track
+                body = body + `\n    <trk>`;    // Create new track
                 if (stage.name && stage.name.length > 0)
-                    body = body + `\n            <name>"${stage.name}"</name>`;     // Add name
+                    body = body + `\n        <name>"${stage.name}"</name>`;     // Add name
                 if (stage.distance != null && stage.ascent != null && stage.descent != null) {
                     // Add distance, ascent, descent as extensions
-                    body = body + `\n            <extensions>`;
+                    body = body + `\n        <extensions>`;
                     if (stage.distance != null)
-                        body = body + `\n                <rp:distance>${stage.distance.toFixed(3)}</rp:distance>`;
+                        body = body + `\n            <rp:distance>${stage.distance.toFixed(3)}</rp:distance>`;
                     if (stage.ascent != null)
-                        body = body + `\n                <rp:ascent>${stage.ascent.toFixed(3)}</rp:ascent>`;
+                        body = body + `\n            <rp:ascent>${stage.ascent.toFixed(3)}</rp:ascent>`;
                     if (stage.descent != null)
-                        body = body + `\n                <rp:descent>${stage.descent.toFixed(3)}</rp:descent>`;
-                    body = body + `\n            </extensions>`;
+                        body = body + `\n            <rp:descent>${stage.descent.toFixed(3)}</rp:descent>`;
+                    body = body + `\n        </extensions>`;
                 }
 
-                body = body + `\n            <trkseg>`;     // Create new track section          
+                body = body + `\n        <trkseg>`;     // Create new track section          
                 for (let i = 0; i < stage.points.length; i++) {
                     const point = stage.points[i];
-                    body = body + `\n                <trkpt lat="${point.marker.getLatLng().lat}" lon="${point.marker.getLatLng().lng}">`;  // Add track point with coordinates
+                    body = body + `\n            <trkpt lat="${point.marker.getLatLng().lat}" lon="${point.marker.getLatLng().lng}">`;  // Add track point with coordinates
                     if (point.marker.getLatLng().alt)
-                        body = body + `\n                    <ele>${point.marker.getLatLng().alt}</ele>`;   // Add track point altitude
-                    body = body + `\n                </trkpt>`;
+                        body = body + `\n                <ele>${point.marker.getLatLng().alt}</ele>`;   // Add track point altitude
+                    body = body + `\n            </trkpt>`;
                     if (stage.sections[i] && stage.sections[i].polyline.getLatLngs().length > 2) {  // If next section was calculated using BRouter
                         const latlngs = stage.sections[i].polyline.getLatLngs();
                         for (let j = 1; j < latlngs.length - 1; j++) {  // First point is skipped because already added
-                            body = body + `\n                <trkpt lat="${latlngs[j].lat}" lon="${latlngs[j].lng}">`;  // Add track point with coordinates
+                            body = body + `\n            <trkpt lat="${latlngs[j].lat}" lon="${latlngs[j].lng}">`;  // Add track point with coordinates
                             if (latlngs[j].alt)
-                                body = body + `\n                    <ele>${latlngs[j].alt}</ele>`;     // Add track point altitude
+                                body = body + `\n                <ele>${latlngs[j].alt}</ele>`;     // Add track point altitude
                             // Add source as extension
-                            body = body + `\n                    <extensions>`;
-                            body = body + `\n                        <rp:source>brouter</rp:source>`;
-                            body = body + `\n                    </extensions>`;
-                            body = body + `\n                </trkpt>`;
+                            body = body + `\n                <extensions>`;
+                            body = body + `\n                    <rp:source>brouter</rp:source>`;
+                            body = body + `\n                </extensions>`;
+                            body = body + `\n            </trkpt>`;
                         }
                     }
                 }
-                body = body + `\n            </trkseg>`;    // FInish track section
-                body = body + `\n        </trk>`;   // Finish track
+                body = body + `\n        </trkseg>`;    // FInish track section
+                body = body + `\n    </trk>`;   // Finish track
             }
 
             const footer = `\n</gpx>`;  // Create footer
@@ -3463,6 +3591,8 @@
         // Escape key handler just for this wrapper
         function escKeyHandler(e) {
             if ((e.key || '').toLowerCase() === 'escape') {
+                L.DomEvent.stopPropagation(e);  // Do not propagate event to map and document
+                
                 // Remove wrapper from DOM
                 wrapper.remove();
                 // Remove this ESC listener
@@ -4249,4 +4379,3 @@ Pour les quatre premiers modes de voyage, le parcours est calculé à l'aide du 
     </script>
 </body>
 </html>
-
