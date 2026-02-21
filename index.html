@@ -104,7 +104,7 @@
         locFinderControl: null,
         geolocControl: null,
         baseMap: null,                  // Base map style
-        routerProfile: 'trekking',      // Router profile
+        routerProfile: null,      // Router profile
         spannedCommand: false,          // Flag: commands spanned or not in the menu
         editedStage: null,              // Currently edited stage
         initializationInProcess: true,  // Flag: initialization in progress
@@ -200,7 +200,7 @@
         map = L.map('map', { doubleClickZoom: false }).setView([44.25, 5], 6);
 
         // Add OpenTopoMap as the default tile layer to the map
-        otmTL.addTo(map);
+        //otmTL.addTo(map);
 
         // Create a specific layer for the markers, so that are always on top of the polylines
         map.createPane('markerPaneTop');
@@ -492,9 +492,10 @@
             select.appendChild(option);
         });
 
-        // Defaulf value
+        // Default value
         if (!context.baseMap)
             context.baseMap = 'otm';
+        baseMaps[context.baseMap].addTo(map);
 
         // Restore selection
         select.value = context.baseMap;
@@ -545,7 +546,7 @@
         });
 
         // Default value
-        if (context.routerProfile === undefined)
+        if (!context.routerProfile)
             context.routerProfile = 'trekking';
 
         // Restore selection
@@ -942,15 +943,15 @@
                     <td>Edit the stage</td>
                 </tr>
                 <tr>
-                    <td><strong>e</strong></td>
+                    <td><strong>Ctrl + e</strong></td>
                     <td>Export the route to a GPX file</td>
                 </tr>
                 <tr>
-                    <td><strong>i</strong></td>
+                    <td><strong>Ctrl + i</strong></td>
                     <td>Import a route from a GPX file</td>
                 </tr>
                 <tr>
-                    <td><strong>r</strong></td>
+                    <td><strong>Ctrl + r</strong></td>
                     <td>Reset the current route</td>
                 </tr>
             </table>
@@ -966,15 +967,15 @@
                     <td>Modifier l'étape</td>
                 </tr>
                 <tr>
-                    <td><strong>e</strong></td>
+                    <td><strong>Ctrl + e</strong></td>
                     <td>Exporter l'itinéraire dans un<br>fichier GPX</td>
                 </tr>
                 <tr>
-                    <td><strong>i</strong></td>
+                    <td><strong>Ctrl + i</strong></td>
                     <td>Importer un itinéraire d'un<br>fichier GPX</td>
                 </tr>
                 <tr>
-                    <td><strong>r</strong></td>
+                    <td><strong>Ctrl + r</strong></td>
                     <td>Réinitialiser l'itinéraire<br>en cours</td>
                 </tr>
             </table>
@@ -1050,11 +1051,14 @@
                     return;     // Don't handle t, l, r, s, etc.
                 }
             
-                if (key === 'e') {   // When user presses 'e' (to save the route to a GPX file)
+                if (e.ctrlKey && key === 'e') {   // When user presses Ctrl + 'e' (to save the route to a GPX file)
+                    e.preventDefault();
                     exportRouteToGPX();
-                } else if (key === 'i') {   // When user presses 'i' (to load a route from a GPX file)
+                } else if (e.ctrlKey && key === 'i') {   // When user presses Ctrl + 'i' (to load a route from a GPX file)
+                    exportRouteToGPX();
                     importRouteFromGPX();
-                } else if (key === 'z') {   // When user presses 'z' (to reset the route)
+                } else if (e.ctrlKey && key === 'r') {   // When user presses Ctrl + 'r' (to reset the route)
+                    exportRouteToGPX();
                     if (confirm(context.language === 'EN' ? "Are you sure you want to reset the route?" : "Etes-vous sûr de vouloir réinitialiser l'itinéraire ?")) 
                         resetRoute();
                 }
@@ -1155,7 +1159,7 @@
                     point.marker.setStyle({ radius: markerSize.medium, opacity: 1, fillOpacity: 0, color: routeColors.neSingle });
                 else if (j === 0)
                     point.marker.setStyle({ radius: markerSize.medium, opacity: 1, fillOpacity: 0, color: routeColors.neDeparture });
-                else if (j < stages[i].points.length - 1)
+                else if (j < stage.points.length - 1)
                     point.marker.setStyle({ radius: markerSize.invisible, opacity: 0, fillOpacity: 0 });
                 else
                     point.marker.setStyle({ radius: markerSize.large, opacity: 1, fillOpacity: 0, color: routeColors.neArrival });        
@@ -1313,7 +1317,7 @@
 
         // Create global label
         const globalLabel = document.createElement('span');
-        globalLabel.textContent = context.language === 'EN' ? 'Edit stage actions:' : 'Actions édition d\'étape : ';
+        globalLabel.textContent = context.language === 'EN' ? 'Edit stage actions:' : 'Actions d\'édition d\'étape : ';
         globalLabel.style.fontSize = '14px';
         globalLabel.style.fontWeight = 'bold';
         titleContainer.appendChild(globalLabel);
@@ -1407,7 +1411,7 @@
        
         // Create merge before stage icon
         const mergeBIcon = document.createElement('i');
-        mergeBIcon.classList.add('fa-solid', 'fa-hand-holding-hand');
+        mergeBIcon.classList.add('fa-solid', 'fa-handshake');
         mergeBIcon.style.fontSize = '20px';
         mergeBIcon.style.lineHeight = '20px';
         mergeBIcon.style.width = '27px';
@@ -1421,42 +1425,16 @@
         mergeBStgButton.appendChild(mergeBIcon);
         mergeBStgButton.style.width = '35px';
         mergeBStgButton.style.height = '30px';
-        mergeBStgButton.style.color = 'orange';
-        mergeBStgButton.title = context.language === 'EN' ? 'Merge other stage before' : 'Fusionner autre étape avant';
+        mergeBStgButton.title = context.language === 'EN' ? 'Merge with another stage\n(Esc to cancel)' : 'Fusionner avec une autre étape\n(Echap. pour annuler)';
         buttonsContainer.appendChild(mergeBStgButton);
 
         // Define submit handler (for merge before)
         async function mergeBStgHandler() {
-            alert(context.language === 'EN' ? 'Will be impleted soon!' : 'Sera implémenté prochainement !');
+            if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
+
+            mergeStage();
         }
         mergeBStgButton.addEventListener('click', mergeBStgHandler);  // Associate submit handler with button
-       
-        // Create merge after stage icon
-        const mergeAIcon = document.createElement('i');
-        mergeAIcon.classList.add('fa-solid', 'fa-hand-holding-hand');
-        mergeAIcon.style.fontSize = '20px';
-        mergeAIcon.style.lineHeight = '20px';
-        mergeAIcon.style.width = '27px';
-        mergeAIcon.style.height = '20px';
-        mergeAIcon.style.transform = 'scaleX(-1)';
-        mergeAIcon.style.display = 'inline-flex';
-        mergeAIcon.style.alignItems = 'center';
-        mergeAIcon.style.justifyContent = 'center';
-
-        // Create submit button for merge after
-        const mergeAStgButton = document.createElement('button');
-        mergeAStgButton.appendChild(mergeAIcon);
-        mergeAStgButton.style.width = '35px';
-        mergeAStgButton.style.height = '30px';
-        mergeAStgButton.style.color = 'orange';
-        mergeAStgButton.title = context.language === 'EN' ? 'Merge other stage after' : 'Fusionner autre étape après';
-        buttonsContainer.appendChild(mergeAStgButton);
-
-        // Define submit handler (for merge after)
-        async function mergeAStgHandler() {
-            alert(context.language === 'EN' ? 'Will be impleted soon!' : 'Sera implémenté prochainement !');
-        }
-        mergeAStgButton.addEventListener('click', mergeAStgHandler);  // Associate submit handler with button
        
         // Create delete stage icon
         const dsIcon = document.createElement('i');
@@ -1514,6 +1492,337 @@
         quitEdtButton.addEventListener('click', quitEdtHandler);  // Associate submit handler with button
        
         return [titleContainer, buttonsContainer];
+    }
+
+    //------------------
+    // Merge two stages
+    //------------------
+    function mergeStage() {
+        const stage = stages[context.editedStage];
+
+        // Check that stage has at least two points
+        if (!stage.points || stage.points.length < 1) {
+            alert(context.language === 'EN' ? 'Stage with no point cannot be merged' : 'Etape sans point ne pouvant pas être fusionnée');
+            return;
+        }
+
+        // Find and highlight stages candidates for merge before and after the edited stage
+        const beforeCandidStgs = [];
+        const afterCandidStgs = [];
+        for (let j = 0; j < stages.length; j++) {
+            if (j != context.editedStage) {
+                // Before the edited stage
+                if (haversine(stage.points[0].marker.getLatLng(), stages[j].points[stages[j].points.length - 1].marker.getLatLng()) < 2) {  // Points distant of less than 2 km
+                    beforeCandidStgs.push(stages[j]);
+                    stages[j].sections.forEach(section =>
+                        section.polyline.setStyle({ color: routeColors.editDeparture })
+                    );
+                    stages[j].points.forEach(point =>
+                        point.marker.setStyle({ color: routeColors.editDeparture })
+                    );
+                }
+                // After the edited stage
+                if (haversine(stage.points[stage.points.length - 1].marker.getLatLng(), stages[j].points[0].marker.getLatLng()) < 2) {  // Points distant of less than 2 km
+                    afterCandidStgs.push(stages[j]);
+                    stages[j].sections.forEach(section =>
+                        section.polyline.setStyle({ color: routeColors.editArrival })
+                    );
+                    stages[j].points.forEach(point =>
+                        point.marker.setStyle({ color: routeColors.editArrival })
+                    );
+                }
+            }
+        }
+        if (beforeCandidStgs.length === 0 && afterCandidStgs.length === 0) {
+            alert(context.language === 'EN' ? "No other stage near enough to be merged" : "Pas d\'autre étape assez proche pour être fusionnée");
+            return;
+        }
+
+        // Define cursor with shakehands
+        const svgHandshake = `
+            <svg xmlns="http://www.w3.org/2000/svg" 
+                width="24"
+                height="24"
+                viewBox="0 0 640 640">
+                <path d="M300.9 149.2L184.3 278.8C179.7 283.9 179.9 291.8 184.8 296.7C215.3 327.2 264.8 327.2 295.3 296.7L327.1 264.9C331.3 260.7 336.6 258.4 342 258C348.8 257.4 355.8 259.7 361 264.9L537.6 440L608 384L608 96L496 160L472.2 144.1C456.4 133.6 437.9 128 418.9 128L348.5 128C347.4 128 346.2 128 345.1 128.1C328.2 129 312.3 136.6 300.9 149.2zM148.6 246.7L255.4 128L215.8 128C190.3 128 165.9 138.1 147.9 156.1L144 160L32 96L32 384L188.4 514.3C211.4 533.5 240.4 544 270.3 544L286 544L279 537C269.6 527.6 269.6 512.4 279 503.1C288.4 493.8 303.6 493.7 312.9 503.1L353.9 544.1L362.9 544.1C382 544.1 400.7 539.8 417.7 531.8L391 505C381.6 495.6 381.6 480.4 391 471.1C400.4 461.8 415.6 461.7 424.9 471.1L456.9 503.1L474.4 485.6C483.3 476.7 485.9 463.8 482 452.5L344.1 315.7L329.2 330.6C279.9 379.9 200.1 379.9 150.8 330.6C127.8 307.6 126.9 270.7 148.6 246.6z"/>
+            </svg>
+        `;
+        map.getContainer().style.cursor = `url("data:image/svg+xml;utf8,${encodeURIComponent(svgHandshake)}") 8 8, crosshair`;
+
+        // Define event handlers on stages candidates for merge before the edited stage
+        beforeCandidStgs.forEach(stageBefore => {
+            for (let j = 0; j < stageBefore.sections.length; j++) {
+                const section = stageBefore.sections[j];
+
+                // Set event listener on section for click
+                const boundHandler = clickForMergeBefore.bind(null, stageBefore);
+                section.polyline.addEventListener('click', boundHandler);    // Add event listener to section
+                section.evtList.push({ target: section.polyline, type: 'click', handler: boundHandler, role: 'merge' });   // Register event listener 
+            }
+
+            for (let j = 0; j < stageBefore.points.length; j++) {
+                const point = stageBefore.points[j];
+
+                const boundHandler = clickForMergeBefore.bind(null, stageBefore);
+                point.marker.addEventListener('click', boundHandler);    // Add event listener to section
+                point.evtList.push({ target: point.marker, type: 'click', handler: boundHandler, role: 'merge' });   // Register event listener 
+            }
+        });
+
+        // Define event handlers on stages candidates for merge after the edited stage
+        afterCandidStgs.forEach(stageAfter => {
+            for (let j = 0; j < stageAfter.sections.length; j++) {
+                const section = stageAfter.sections[j];
+
+                // Set event listener on section for click
+                const boundHandler = clickForMergeAfter.bind(null, stageAfter);
+                section.polyline.addEventListener('click', boundHandler);    // Add event listener to section
+                section.evtList.push({ target: section.polyline, type: 'click', handler: boundHandler, role: 'merge' });   // Register event listener 
+            }
+
+            for (let j = 0; j < stageAfter.points.length; j++) {
+                const point = stageAfter.points[j];
+
+                const boundHandler = clickForMergeAfter.bind(null, stageAfter);
+                point.marker.addEventListener('click', boundHandler);    // Add event listener to section
+                point.evtList.push({ target: point.marker, type: 'click', handler: boundHandler, role: 'merge' });   // Register event listener 
+            }
+        });
+
+        // Escape key handler just for split
+        function escKeyHandler(e) {
+            if ((e.key || '').toLowerCase() === 'escape') {
+                L.DomEvent.stopPropagation(e);  // Do not propagate event to map and document
+
+                setNonEdtColors(beforeCandidStgs)   // Set candidates stages with non edit colors
+                setNonEdtColors(afterCandidStgs)   // Set candidates stages with non edit colors
+
+                removeMergeHandlers(beforeCandidStgs);  // Remove event handlers (that were added for merging)
+                removeMergeHandlers(afterCandidStgs);  // Remove event handlers (that were added for merging)
+                     
+                // Remove handlers and wrapper
+                document.removeEventListener('keydown', escKeyHandler);
+
+                map.getContainer().style.cursor = 'crosshair';
+
+                context.operationWithButtonInProcess = false;   // Stop blocking the other operations
+            }
+        }
+        document.addEventListener('keydown', escKeyHandler);
+
+        // Register operation in process (to block other potential concurrent operations)
+        context.operationWithButtonInProcess = true;
+
+        // Function to process clicks on polylines and markers
+        async function clickForMergeBefore(stageRef, e) {
+            const iRef = stages.indexOf(stageRef);  // Retrieve stage index
+            if (iRef === -1) return;
+
+            L.DomEvent.stopPropagation(e);  // Prevent map click from firing
+
+            setNonEdtColors(beforeCandidStgs)   // Set candidates stages with non edit colors
+            setNonEdtColors(afterCandidStgs)   // Set candidates stages with non edit colors
+                     
+            removeMergeHandlers(beforeCandidStgs);  // Remove event handlers (that were added for merging)
+            removeMergeHandlers(afterCandidStgs);  // Remove event handlers (that were added for merging)
+            
+            document.removeEventListener('keydown', escKeyHandler); //Remove Esc event handler (that were added for merging);
+
+            map.getContainer().style.cursor = 'crosshair';
+
+            context.operationWithButtonInProcess = false;   // To prevent firing the single click handler
+
+            let lastPt = stageRef.points[stageRef.points.length - 1].marker.getLatLng();
+            let firstPt = stage.points[0].marker.getLatLng();
+            if (lastPt.lat != firstPt.lat || lastPt.lng != firstPt.lng) {
+                if (context.routerProfile) {
+                    const coordinates = lastPt.lng + "," + lastPt.lat + "|" +
+                        firstPt.lng + "," + firstPt.lat;      // Prepare coordinates to be submitted to BRouter
+                    calculatedPoints = await fetchBRouterRoute(coordinates);    // Find route to new point with BRouter
+                    if (!calculatedPoints) {      // When no route is found by BRouter
+                        //alert(context.language === 'EN' ? "Failed to find a path to this location" : "Aucun chemin trouvé pour ce lieu");
+                        return;
+                    }
+                    calculatedPoints = simplifyPolyGeom(calculatedPoints);  // Simplify geometry of new section by removing part of the points
+
+                    // Adjust last point's and last section's positions of before track using BRouter response
+                    lastPt = calculatedPoints[0];
+                    stageRef.points[stageRef.points.length - 1].marker.setLatLng(lastPt); // Adjust last point's position
+                    if (stageRef.sections.length > 0) { // When there are sections in the stage, adjust last section's end position
+                        let latlngs = stageRef.sections[stageRef.sections.length - 1].polyline.getLatLngs()
+                        latlngs.pop()
+                        latlngs.push(lastPt);
+                        stageRef.sections[stageRef.sections.length - 1].polyline.setLatLngs(latlngs);
+                    }                            
+
+                    // Adjust first point's and first section's positions of edited track using BRouter response
+                    firstPt = calculatedPoints[calculatedPoints.length - 1];
+                    stage.points[0].marker.setLatLng(firstPt); // Adjust first point's position
+                    if (stage.sections.length > 0) { // When there are sections in the stage, adjust last section's end position
+                        let latlngs = stage.sections[0].polyline.getLatLngs()
+                        latlngs.shift()
+                        latlngs.unshift(firstPt);
+                        stage.sections[0].polyline.setLatLngs(latlngs);
+                    }
+                    const poly = L.polyline(calculatedPoints).addTo(map);
+                    stage.sections.unshift({polyline: poly, evtList: []});
+                } else {
+                    const poly = L.polyline([lastPt, firstPt]).addTo(map);
+                    stage.sections.unshift({polyline: poly, evtList: []});
+                }
+                stageRef.sections.push(...stage.sections);
+                stage.sections = stageRef.sections;
+                stageRef.points.push(...stage.points);
+                stage.points = stageRef.points;
+            } else {    // Last point of stageRef and first point of stage are the same
+                stageRef.sections.push(...stage.sections);
+                stage.sections = stageRef.sections;
+                stageRef.points[stageRef.points.length - 1].marker.remove();
+                stageRef.points.pop();     // Remove last point, which is the same as first point of stage
+                stageRef.points.push(...stage.points);
+                stage.points = stageRef.points;
+            }
+
+            if (stageRef.infoPop)
+                stageRef.infoPop.remove();
+
+            stages.splice(iRef, 1);     // Discard stageRef
+
+            context.editedStage = stages.indexOf(stage);
+                
+            setStg4EdtStg(context.editedStage);    // Set new stage layout and event listeners for edit mode
+
+            calculateStageDistance(stage);   // Calculate stage distance
+
+            calculateAscentAndDescent(stage);    // Calculate stage ascent and descent
+                
+            // Update stage information to be displayed in popup and show it (if selected)
+            updateInfoPopup(stage, true);
+            if (context.displayInfo) {
+                showInfoPopup(stage);
+            }
+        }
+
+        // Function to process clicks on polylines and markers
+        async function clickForMergeAfter(stageRef, e) {
+            const iRef = stages.indexOf(stageRef);  // Retrieve stage index
+            if (iRef === -1) return;
+
+            L.DomEvent.stopPropagation(e);  // Prevent map click from firing
+
+            setNonEdtColors(beforeCandidStgs)   // Set candidates stages with non edit colors
+            setNonEdtColors(afterCandidStgs)   // Set candidates stages with non edit colors
+                     
+            removeMergeHandlers(beforeCandidStgs);  // Remove event handlers (that were added for merging)
+            removeMergeHandlers(afterCandidStgs);  // Remove event handlers (that were added for merging)
+            
+            document.removeEventListener('keydown', escKeyHandler); //Remove Esc event handler (that were added for merging);
+
+            map.getContainer().style.cursor = 'crosshair';
+
+            context.operationWithButtonInProcess = false;   // To prevent firing the single click handler
+
+            let lastPt = stage.points[stage.points.length - 1].marker.getLatLng();
+            let firstPt = stageRef.points[0].marker.getLatLng();
+            if (lastPt.lat != firstPt.lat || lastPt.lng != firstPt.lng) {
+                if (context.routerProfile) {
+                    const coordinates = lastPt.lng + "," + lastPt.lat + "|" +
+                        firstPt.lng + "," + firstPt.lat;      // Prepare coordinates to be submitted to BRouter
+                    calculatedPoints = await fetchBRouterRoute(coordinates);    // Find route to new point with BRouter
+                    if (!calculatedPoints) {      // When no route is found by BRouter
+                        //alert(context.language === 'EN' ? "Failed to find a path to this location" : "Aucun chemin trouvé pour ce lieu");
+                        return;
+                    }
+                    calculatedPoints = simplifyPolyGeom(calculatedPoints);  // Simplify geometry of new section by removing part of the points
+
+                    // Adjust last point's and last section's positions of before track using BRouter response
+                    lastPt = calculatedPoints[0];
+                    stage.points[stage.points.length - 1].marker.setLatLng(lastPt); // Adjust last point's position
+                    if (stage.sections.length > 0) { // When there are sections in the stage, adjust last section's end position
+                        let latlngs = stage.sections[stage.sections.length - 1].polyline.getLatLngs()
+                        latlngs.pop()
+                        latlngs.push(lastPt);
+                        stage.sections[stage.sections.length - 1].polyline.setLatLngs(latlngs);
+                    }                            
+
+                    // Adjust first point's and first section's positions of edited track using BRouter response
+                    firstPt = calculatedPoints[calculatedPoints.length - 1];
+                    stageRef.points[0].marker.setLatLng(firstPt); // Adjust first point's position
+                    if (stageRef.sections.length > 0) { // When there are sections in the stage, adjust last section's end position
+                        let latlngs = stageRef.sections[0].polyline.getLatLngs()
+                        latlngs.shift()
+                        latlngs.unshift(firstPt);
+                        stageRef.sections[0].polyline.setLatLngs(latlngs);
+                    }
+                    const poly = L.polyline(calculatedPoints).addTo(map);
+                    stage.sections.push({polyline: poly, evtList: []});
+                } else {
+                    const poly = L.polyline([lastPt, firstPt]).addTo(map);
+                    stage.sections.push({polyline: poly, evtList: []});
+                }
+                stage.sections.push(...stageRef.sections);
+                stage.points.push(...stageRef.points);
+            } else {    // Last point of stageRef and first point of stage are the same
+                stage.sections.push(...stageRef.sections);
+                stage.points[stage.points.length - 1].marker.remove();
+                stage.points.pop();     // Remove last point, which is the same as first point of stageRef
+                stage.points.push(...stageRef.points);
+            }
+
+            if (stageRef.infoPop)
+                stageRef.infoPop.remove();
+
+            stages.splice(iRef, 1);     // Discard stageRef
+
+            context.editedStage = stages.indexOf(stage);
+                
+            setStg4EdtStg(context.editedStage);    // Set new stage layout and event listeners for edit mode
+
+            calculateStageDistance(stage);   // Calculate stage distance
+
+            calculateAscentAndDescent(stage);    // Calculate stage ascent and descent
+                
+            // Update stage information to be displayed in popup and show it (if selected)
+            updateInfoPopup(stage, true);
+            if (context.displayInfo) {
+                showInfoPopup(stage);
+            }
+        }
+
+        // Function to remove the handlers created for split
+        function removeMergeHandlers(candidStages) {
+            candidStages.forEach(stg => {
+                for (const collection of [stg.sections, stg.points]) {
+                    for (const item of collection) {
+                        for (let j = item.evtList.length - 1; j >= 0; j--) {
+                            const evt = item.evtList[j];
+                            if (evt.role === 'merge') {
+                                evt.target.removeEventListener(evt.type, evt.handler);
+                                item.evtList.splice(j, 1);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function setNonEdtColors(candidStages) {
+            candidStages.forEach(stage => {
+                stage.sections.forEach(section => {
+                    section.polyline.setStyle({ color: routeColors.neRoute, weight: routeWeights.neRoute, opacity: 1, fillOpacity: 0 });   // Set layout
+                })
+                stage.points.forEach((point, j) => {
+                    if (j === 0 && stage.points.length === 1)
+                        point.marker.setStyle({ radius: markerSize.medium, opacity: 1, fillOpacity: 0, color: routeColors.neSingle });
+                    else if (j === 0)
+                        point.marker.setStyle({ radius: markerSize.medium, opacity: 1, fillOpacity: 0, color: routeColors.neDeparture });
+                    else if (j < stage.points.length - 1)
+                        point.marker.setStyle({ radius: markerSize.invisible, opacity: 0, fillOpacity: 0 });
+                    else
+                        point.marker.setStyle({ radius: markerSize.large, opacity: 1, fillOpacity: 0, color: routeColors.neArrival });
+                });
+            });
+        }
     }
 
     //--------------------------------------------------
@@ -1590,6 +1899,8 @@
 
                         stageRef2.points.push(...movedPoints);
 
+                        stageRef2.name = stageRef.name + ' (2)';
+
                         stages.splice(iRef + 1, 0, stageRef2);  // Insert new stage into array of stages
 
                         setStg4NonEdt(iRef);    // Set old stage layout and event listeners for edit mode
@@ -1653,6 +1964,8 @@
 
                     stageRef2.points.push(...movedPoints);
 
+                    stageRef2.name = stageRef.name + ' (2)';
+
                     stages.splice(iRef + 1, 0, stageRef2);  // Insert new stage into array of stages
 
                     setStg4NonEdt(iRef);    // Set old stage layout and event listeners for edit mode
@@ -1702,11 +2015,11 @@
         function removeSplitHandlers(stage) {
             for (const collection of [stage.sections, stage.points]) {
                 for (const item of collection) {
-                    for (let i = item.evtList.length - 1; i >= 0; i--) {
-                        const evt = item.evtList[i];
+                    for (let j = item.evtList.length - 1; j >= 0; j--) {
+                        const evt = item.evtList[j];
                         if (evt.role === 'split') {
                             evt.target.removeEventListener(evt.type, evt.handler);
-                            item.evtList.splice(i, 1);
+                            item.evtList.splice(j, 1);
                         }
                     }
                 }
@@ -1778,12 +2091,20 @@
                     <td>Set a name to the stage</td>
                 </tr>
                 <tr>
-                    <td><strong>u</strong></td>
-                    <td>Delete the last point of<br>the stage</td>
+                    <td><strong>r</strong></td>
+                    <td>Reverse stage direction</td>
                 </tr>
                 <tr>
-                    <td><strong>v</strong></td>
-                    <td>Delete the first point of<br>the stage</td>
+                    <td><strong>s</strong></td>
+                    <td>Split stage</td>
+                </tr>
+                <tr>
+                    <td><strong>m</strong></td>
+                    <td>Merge stage</td>
+                </tr>
+                <tr>
+                    <td><strong>u</strong> or <strong>v</strong></td>
+                    <td>Delete the last or first<br>point of the stage</td>
                 </tr>
                 <tr>
                     <td><strong>d</strong></td>
@@ -1805,15 +2126,15 @@
                     <td>Edit the stage</td>
                 </tr>
                 <tr>
-                    <td><strong>e</strong></td>
+                    <td><strong>Ctrl + e</strong></td>
                     <td>Export the route to a GPX file</td>
                 </tr>
                 <tr>
-                    <td><strong>i</strong></td>
+                    <td><strong>Ctrl + i</strong></td>
                     <td>Import a route from a GPX file</td>
                 </tr>
                 <tr>
-                    <td><strong>r</strong></td>
+                    <td><strong>Ctrl + r</strong></td>
                     <td>Reset the current route</td>
                 </tr>
             </table>
@@ -1841,12 +2162,21 @@
                     <td>Attribuer un nom à<br>l'étape</td>
                 </tr>
                 <tr>
-                    <td><strong>u</strong></td>
-                    <td>Supprimer le dernier<br>point de l'étape</td>
+                <tr>
+                    <td><strong>r</strong></td>
+                    <td>Inverser la direction de l'étape</td>
                 </tr>
                 <tr>
-                    <td><strong>v</strong></td>
-                    <td>Supprimer le premier<br>point de l'étape</td>
+                    <td><strong>s</strong></td>
+                    <td>Partager l'étape</td>
+                </tr>
+                <tr>
+                    <td><strong>m</strong></td>
+                    <td>Fusionner l'étape</td>
+                </tr>
+                <tr>
+                    <td><strong>u</strong> ou <strong>v</strong></td>
+                    <td>Supprimer le dernier ou le premier point de l'étape</td>
                 </tr>
                 <tr>
                     <td><strong>d</strong></td>
@@ -1868,15 +2198,15 @@
                     <td>Modifier l'étape</td>
                 </tr>
                 <tr>
-                    <td><strong>e</strong></td>
+                    <td><strong>Ctrl + e</strong></td>
                     <td>Exporter l'itinéraire dans un<br>fichier GPX</td>
                 </tr>
                 <tr>
-                    <td><strong>i</strong></td>
+                    <td><strong>Ctrl + i</strong></td>
                     <td>Importer un itinéraire d'un<br>fichier GPX</td>
                 </tr>
                 <tr>
-                    <td><strong>r</strong></td>
+                    <td><strong>Ctrl + r</strong></td>
                     <td>Réinitialiser l'itinéraire<br>en cours</td>
                 </tr>
             </table>
@@ -1971,23 +2301,38 @@
             }
 
             if (key === 'escape') {     // When user presses 'escape' (to quit edit mode)
+                e.preventDefault();
                 quitEditStage();
             } else if (key === 'd') {     // When user presses 'd' (to delete current stage)
+                e.preventDefault();
                 if (confirm(context.language === 'EN' ? "Are you sure you want to delete the edited stage?" : "Etes-vous sûr de vouloir supprimer l'étape en cours d'édition ?")) 
                     deleteStg(context.editedStage);
             } else if (key === 'n') {     // When user presses 'n' (to set/change stage name)
+                e.preventDefault();
                 setStgName();
             } else if (key === 'u') {     // When user presses 'u' (to delete stage's last point)
+                e.preventDefault();
                 deleteLastPoint();
             } else if (key === 'v') {     // When user presses 'v' (to delete stage's first point)
+                e.preventDefault();
                 deleteFirstPoint();
-            } else if (key === 'e') {   // When user presses 'e' (to save the route to a GPX file)
+            } else if (e.ctrlKey && key === 'e') {   // When user presses Ctrl + 'e' (to save the route to a GPX file)
+                e.preventDefault();
                 exportRouteToGPX();
-            } else if (key === 'i') {   // When user presses 'i' (to load a route from a GPX file)
+            } else if (e.ctrlKey && key === 'i') {   // When user presses Ctrl + 'i' (to load a route from a GPX file)
+                e.preventDefault();
                 importRouteFromGPX();
             } else if (key === 'r') {   // When user presses 'r' (to reverse the stage's direction)
+                e.preventDefault();
                 reverseStage();
-            } else if (key === 'z') {   // When user presses 'z' (to reset the route)
+            } else if (key === 's') {   // When user presses 's' (to split the stage's direction)
+                e.preventDefault();
+                splitStage();
+            } else if (key === 'm') {   // When user presses 'm' (to merge the stage's direction)
+                e.preventDefault();
+                mergeStage();
+            } else if (e.ctrlKey && key === 'r') {   // When user presses Ctrl + 'r' (to reset the route)
+                e.preventDefault();
                 if (confirm(context.language === 'EN' ? "Are you sure you want to reset the route?" : "Etes-vous sûr de vouloir réinitialiser l'itinéraire ?")) 
                     resetRoute();
             }
@@ -4060,6 +4405,19 @@
         stage.distance = distance;
     }
 
+    //------------------------------------------------------------
+    // Calculate the length of a path defined with several points
+    //------------------------------------------------------------
+    function calculateDistance(points) { 
+        let dist = 0;
+
+        for (let i = 1; i < points.length; i++) {
+            dist = dist + haversine(points[i - 1], points[i]);  // Use the haversine function to add the distance between two points
+        }
+        
+        return dist;
+    }
+
     //----------------------------------------------------------------------------------------
     // Calculate stage's ascent and descent with smoothing the elevations returned by BRouter
     //----------------------------------------------------------------------------------------
@@ -4140,19 +4498,6 @@
                     prevSmoothAlt = smoothAlt;
             }
         }
-    }
-
-    //------------------------------------------------------------
-    // Calculate the length of a path defined with several points
-    //------------------------------------------------------------
-    function calculateDistance(points) { 
-        let dist = 0;
-
-        for (let i = 1; i < points.length; i++) {
-            dist = dist + haversine(points[i - 1], points[i]);  // Use the haversine function to add the distance between two points
-        }
-        
-        return dist;
     }
 
     //----------------------------------------------
@@ -4564,6 +4909,12 @@ For the first four travel modes, the route is calculated using the BRouter routi
 <li>Drag and drop a section of the stage to insert a new point and move it.</li>
 <li>Click the "Set stage name" button or press the “n” key to assign a name to the stage.</li>
 <li>Click the "Reverse stage direction" button or press the "r" key to reverse the stage's direction.</li>
+<li>Click the "Split stage" button to split the stage into two stages at a place pointed with the mouse.</li>
+<li>Click the "Merge with another stage" button to merge the stage with a nearby stage. To be eligible for merging, the other stages must:
+<ul>
+<li>Either have their end point less than 2 km from the start point of the edited stage. Such stages are candidates for merging <strong>before</strong> the edited stage and are highlighted in green.</li>
+<li>Or have their start point less than 2 km from the end point of the edited stage. Such stages are candidates for merging <strong>after</strong> the edited stage and are highlighted in red.</li>
+</ul> 
 <li>Press the “u” key to delete the last point on the stage.</li>
 <li>Press the “v” key to delete the first point on the stage.</li>
 <li>Click the "Delete stage" button or press the “d” key to delete all points (and all sections) from the stage. This action also switches to supervision mode.</li>
@@ -4653,6 +5004,12 @@ Pour les quatre premiers modes de voyage, le parcours est calculé à l'aide du 
 <li>Tirer-déposer une section de l'étape pour insérer un nouveau point et le déplacer.</li>
 <li>Cliquer sur le bouton "Attribuer nom à l'étape" ou presser la touche "n" pour attribuer un nom à l'étape.</li>
 <li>Cliquer sur le bouton "Inverser direction de l'étape" ou presser la touche "r" pour inverser la direction de l'étape.</li>
+<li>Cliquer sur le bouton "Partager l'étape en deux" pour partager l'étape en deux étapes à un point désigné avec la souris.</li>
+<li>Cliquer sur le bouton "Fusionner avec une autre étape" pour fusionner l'étape avec une autre étape voisine désignée avec la souris. Pour être éligibles à la fusion, les autres étapes doivent :
+<ul>
+<li>Soit avoir leur point d'arrivée distant de moins de 2 km du point de départ de l'étape en cours d'édition. De telles étapes sont candidates à la fusion <strong>avant</strong> l'étape éditée et mises en évidence par la couleur verte.</li>
+<li>Soit avoir leur point de départ distant de moins de 2 km du point d'arrivée de l'étape en cours d'édition. De telles étapes sont candidates à la fusion <strong>après</strong> l'étape éditée et mises en évidence par la couleur rouge.</li>
+</ul> 
 <li>Presser la touche "u" pour supprimer le dernier point de l'étape.</li>
 <li>Presser la touche "v" pour supprimer le premier point de l'étape.</li>
 <li>Cliquer sur le bouton "Supprimer l'étape" ou presser la touche "d" pour supprimer tous les points (et toutes les sections) de l'étape. Cette action fait également passer en mode supervision.</li>
