@@ -1074,7 +1074,6 @@
                     exportRouteToGPX();
                     importRouteFromGPX();
                 } else if (e.ctrlKey && key === 'r') {   // When user presses Ctrl + 'r' (to reset the route)
-                    exportRouteToGPX();
                     if (confirm(context.language === 'EN' ? "Are you sure you want to reset the route?" : "Etes-vous sûr de vouloir réinitialiser l'itinéraire ?")) 
                         resetRoute();
                 }
@@ -1549,10 +1548,24 @@
         // Find and highlight stages candidates for merge before and after the edited stage
         const beforeCandidStgs = [];
         const afterCandidStgs = [];
+        const baCandidStgs = [];
         for (let j = 0; j < stages.length; j++) {
             if (j != context.editedStage) {
-                // Before the edited stage
-                if (haversine(stage.points[0].marker.getLatLng(), stages[j].points[stages[j].points.length - 1].marker.getLatLng()) < 2) {  // Points distant of less than 2 km
+                const beforeDistance = haversine(stage.points[0].marker.getLatLng(), stages[j].points[stages[j].points.length - 1].marker.getLatLng());
+                const afterDistance = haversine(stage.points[stage.points.length - 1].marker.getLatLng(), stages[j].points[0].marker.getLatLng());
+                const DIST_THRESHOLD = 2;   // 2 km
+
+                if (beforeDistance < DIST_THRESHOLD && afterDistance < DIST_THRESHOLD) {  // Points distant of less than 2 km before and after the edited stage
+                    baCandidStgs.push(stages[j]);
+                    stages[j].sections.forEach(section => 
+                        section.polyline.setStyle({ color: routeColors.editSingle })
+                    );
+                    stages[j].points.forEach((point, k) => {
+                        if (k === 0) point.marker.setStyle({ color: routeColors.editDeparture });
+                        else if (k === stages[j].points.length - 1) point.marker.setStyle({ color: routeColors.editArrival });
+                        else point.marker.setStyle({ color: routeColors.editSingle });
+                    });
+                } else if (beforeDistance < DIST_THRESHOLD) {  // Points distant of less than 2 km before the edited stage
                     beforeCandidStgs.push(stages[j]);
                     stages[j].sections.forEach(section =>
                         section.polyline.setStyle({ color: routeColors.editDeparture })
@@ -1560,9 +1573,7 @@
                     stages[j].points.forEach(point =>
                         point.marker.setStyle({ color: routeColors.editDeparture })
                     );
-                }
-                // After the edited stage
-                if (haversine(stage.points[stage.points.length - 1].marker.getLatLng(), stages[j].points[0].marker.getLatLng()) < 2) {  // Points distant of less than 2 km
+                } else if (afterDistance < DIST_THRESHOLD) {  // Points distant of less than 2 km after teh edited stage
                     afterCandidStgs.push(stages[j]);
                     stages[j].sections.forEach(section =>
                         section.polyline.setStyle({ color: routeColors.editArrival })
@@ -1573,7 +1584,7 @@
                 }
             }
         }
-        if (beforeCandidStgs.length === 0 && afterCandidStgs.length === 0) {
+        if (baCandidStgs.length === 0 && beforeCandidStgs.length === 0 && afterCandidStgs.length === 0) {
             alert(context.language === 'EN' ? "No other stage near enough to be merged" : "Pas d\'autre étape assez proche pour être fusionnée");
             return;
         }
@@ -1588,6 +1599,39 @@
             </svg>
         `;
         map.getContainer().style.cursor = `url("data:image/svg+xml;utf8,${encodeURIComponent(svgHandshake)}") 8 8, crosshair`;
+
+        // Define event handlers on stages candidates for merge before and after the edited stage
+        baCandidStgs.forEach(stageBA => {
+            for (let j = 0; j < stageBA.sections.length; j++) {
+                const section = stageBA.sections[j];
+
+                // Set event listener on section for click
+                const boundHandler = clickForMergeBAInfo.bind(null, stageBA);
+                section.polyline.addEventListener('click', boundHandler);    // Add event listener to section
+                section.evtList.push({ target: section.polyline, type: 'click', handler: boundHandler, role: 'merge' });   // Register event listener 
+            }
+
+            const point1 = stageBA.points[0];
+
+            const boundHandler1 = clickForMergeBefore.bind(null, stageBA);
+            point1.marker.addEventListener('click', boundHandler1);    // Add event listener to section
+            point1.evtList.push({ target: point1.marker, type: 'click', handler: boundHandler1, role: 'merge' });   // Register event listener 
+
+            for (let j = 1; j < stageBA.points.length - 1; j++) {
+                const point = stageBA.points[j];
+
+                const boundHandler = clickForMergeBAInfo.bind(null, stageBA);
+                point.marker.addEventListener('click', boundHandler);    // Add event listener to section
+                point.evtList.push({ target: point.marker, type: 'click', handler: boundHandler, role: 'merge' });   // Register event listener 
+            }
+
+            const point2 = stageBA.points[stageBA.points.length - 1];
+
+            const boundHandler2 = clickForMergeAfter.bind(null, stageBA);
+            point2.marker.addEventListener('click', boundHandler2);    // Add event listener to section
+            point2.evtList.push({ target: point2.marker, type: 'click', handler: boundHandler2, role: 'merge' });   // Register event listener 
+
+        });
 
         // Define event handlers on stages candidates for merge before the edited stage
         beforeCandidStgs.forEach(stageBefore => {
@@ -1634,9 +1678,11 @@
             if ((e.key || '').toLowerCase() === 'escape') {
                 L.DomEvent.stopPropagation(e);  // Do not propagate event to map and document
 
+                setNonEdtColors(baCandidStgs)   // Set candidates stages with non edit colors
                 setNonEdtColors(beforeCandidStgs)   // Set candidates stages with non edit colors
                 setNonEdtColors(afterCandidStgs)   // Set candidates stages with non edit colors
 
+                removeMergeHandlers(baCandidStgs);  // Remove event handlers (that were added for merging)
                 removeMergeHandlers(beforeCandidStgs);  // Remove event handlers (that were added for merging)
                 removeMergeHandlers(afterCandidStgs);  // Remove event handlers (that were added for merging)
                      
@@ -1654,15 +1700,23 @@
         context.operationWithButtonInProcess = true;
 
         // Function to process clicks on polylines and markers
+        async function clickForMergeBAInfo(stageRef, e) {
+            alert(context.language === 'EN' ? 'This stage can merged on both sides of the edited stage.\nClick its first point to merge it before.\nOr click its last point to merge it after.' : 
+                'Cette étape peut être fusionnée de chaque côté de l\'étape en cours d\'édition\nCliquer sur son premier point pour la fusionner avant.\nOu cliquer sur son dernier point pour la fusionner après.')
+        }
+
+        // Function to process clicks on polylines and markers
         async function clickForMergeBefore(stageRef, e) {
             const iRef = stages.indexOf(stageRef);  // Retrieve stage index
             if (iRef === -1) return;
 
             L.DomEvent.stopPropagation(e);  // Prevent map click from firing
 
+            setNonEdtColors(baCandidStgs)   // Set candidates stages with non edit colors
             setNonEdtColors(beforeCandidStgs)   // Set candidates stages with non edit colors
             setNonEdtColors(afterCandidStgs)   // Set candidates stages with non edit colors
                      
+            removeMergeHandlers(baCandidStgs);  // Remove event handlers (that were added for merging)
             removeMergeHandlers(beforeCandidStgs);  // Remove event handlers (that were added for merging)
             removeMergeHandlers(afterCandidStgs);  // Remove event handlers (that were added for merging)
             
@@ -1750,9 +1804,11 @@
 
             L.DomEvent.stopPropagation(e);  // Prevent map click from firing
 
+            setNonEdtColors(baCandidStgs)   // Set candidates stages with non edit colors
             setNonEdtColors(beforeCandidStgs)   // Set candidates stages with non edit colors
             setNonEdtColors(afterCandidStgs)   // Set candidates stages with non edit colors
                      
+            removeMergeHandlers(baCandidStgs);  // Remove event handlers (that were added for merging)
             removeMergeHandlers(beforeCandidStgs);  // Remove event handlers (that were added for merging)
             removeMergeHandlers(afterCandidStgs);  // Remove event handlers (that were added for merging)
             
