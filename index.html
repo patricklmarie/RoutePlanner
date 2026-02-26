@@ -107,7 +107,6 @@
         routerProfile: null,      // Router profile
         spannedCommand: false,          // Flag: commands spanned or not in the menu
         editedStage: null,              // Currently edited stage
-        initializationInProcess: true,  // Flag: initialization in progress
         operationWithButtonInProcess: false,    // Flag: operation such as save, load or set name in process
         clickTimeout: null,             // Timeout used to distinguish simple clicks from double clicks
         suppressNextClick: false,       // Flag used not to take into account next click
@@ -1052,36 +1051,6 @@
         for (const { target, type, handler } of documentEvtList)
             target.removeEventListener(type, handler);
         documentEvtList.splice(0);  // Clear registered event listeners
-
-        // Set permanent event listeners (just the first time). They are not registered because they never need to be removed
-        if (context.initializationInProcess) {
-            // Set permanent event listeners on doc for key pressed (one time for all time)
-            function doc_keydown(e) {    
-                if (context.operationWithButtonInProcess) return;   // Ignore if a save or rename operation is in process
-    
-                const key = (e.key || '').toLowerCase();
-
-                // If the user is typing in an input or textarea, ignore shortcuts
-                const tag = (e.target && e.target.tagName || '').toLowerCase();
-                if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) {
-                    return;     // Don't handle t, l, r, s, etc.
-                }
-            
-                if (e.ctrlKey && key === 'e') {   // When user presses Ctrl + 'e' (to save the route to a GPX file)
-                    e.preventDefault();
-                    exportRouteToGPX();
-                } else if (e.ctrlKey && key === 'i') {   // When user presses Ctrl + 'i' (to load a route from a GPX file)
-                    exportRouteToGPX();
-                    importRouteFromGPX();
-                } else if (e.ctrlKey && key === 'r') {   // When user presses Ctrl + 'r' (to reset the route)
-                    if (confirm(context.language === 'EN' ? "Are you sure you want to reset the route?" : "Etes-vous sûr de vouloir réinitialiser l'itinéraire ?")) 
-                        resetRoute();
-                }
-            }
-            document.addEventListener('keydown', doc_keydown);  // Add event listener to document
-
-            context.initializationInProcess = false;
-        }
 
         map.getContainer().style.cursor = 'grabbing';
 
@@ -2412,12 +2381,6 @@
             } else if (key === 'v') {     // When user presses 'v' (to delete stage's first point)
                 e.preventDefault();
                 deleteFirstPoint();
-            } else if (e.ctrlKey && key === 'e') {   // When user presses Ctrl + 'e' (to save the route to a GPX file)
-                e.preventDefault();
-                exportRouteToGPX();
-            } else if (e.ctrlKey && key === 'i') {   // When user presses Ctrl + 'i' (to load a route from a GPX file)
-                e.preventDefault();
-                importRouteFromGPX();
             } else if (key === 'r') {   // When user presses 'r' (to reverse the stage's direction)
                 e.preventDefault();
                 reverseStage();
@@ -2427,10 +2390,6 @@
             } else if (key === 'm') {   // When user presses 'm' (to merge the stage's direction)
                 e.preventDefault();
                 mergeStage();
-            } else if (e.ctrlKey && key === 'r') {   // When user presses Ctrl + 'r' (to reset the route)
-                e.preventDefault();
-                if (confirm(context.language === 'EN' ? "Are you sure you want to reset the route?" : "Etes-vous sûr de vouloir réinitialiser l'itinéraire ?")) 
-                    resetRoute();
             }
         }
         document.addEventListener('keydown', doc_keydown);      // Add event listener to document
@@ -5017,9 +4976,9 @@ For the first four travel modes, the route is calculated using the BRouter routi
 <li>Click the "Quit stage edition" button or press the “Escape” key to finish creating/editing the stage and switch to supervision mode. </li>
 <li>Click the "Start creating a new stage" button or double-click on the map to finish creating/editing the current stage and switch to create/edit mode for a new stage. </li>
 <li>Double-click on a point or section of another stage to finish creating/editing the current stage and switch to create/edit mode for that stage. </li>
-<li>Click the "Import stages from GPX" or press the “Ctrl + i” key to import additional stages from a GPX file (without deleting the stages already defined). </li>
-<li>Click the "Export route to GPX" or press the “Ctrl + e” key to export the route to a GPX file. </li>
-<li>Click the "Reset route" or press the “Ctrl + r” key to reset the route (i.e., delete all the stages).</li>
+<li>Click the "Import stages from GPX" to import additional stages from a GPX file (without deleting the stages already defined). </li>
+<li>Click the "Export route to GPX" to export the route to a GPX file. </li>
+<li>Click the "Reset route" to reset the route (i.e., delete all the stages).</li>
 </ul>
 <h3>Supervision mode</h3>
 <p>This mode allows you to view the stages of the route without any being created/edited. The start and end points of each stage are shown, but not the waypoints. </p> 
@@ -5027,9 +4986,9 @@ For the first four travel modes, the route is calculated using the BRouter routi
 <ul>
 <li>Click the "Start creating a new stage" button or double-click on the map to switch to create/edit mode for a new stage. </li>
 <li>Double-click on a point or section of a stage to switch to create/edit mode for that stage. </li>
-<li>Click the "Import stages from GPX" or press the “Ctrl + i” key to import additional stages from a GPX file (without deleting the stages already defined). </li>
-<li>Click the "Export route to GPX" or press the “Ctrl + e” key to export the route to a GPX file. </li>
-<li>Click the "Reset route" or press the “Ctrl + r” key to reset the route (i.e., delete all the stages).</li>
+<li>Click the "Import stages from GPX" to import additional stages from a GPX file (without deleting the stages already defined). </li>
+<li>Click the "Export route to GPX" to export the route to a GPX file. </li>
+<li>Click the "Reset route" to reset the route (i.e., delete all the stages).</li>
 </ul>
 <h2>Miscellaneous</h2>
 <p>The user interface language can be selected: English (default) or French.</p>
@@ -5112,9 +5071,9 @@ Pour les quatre premiers modes de voyage, le parcours est calculé à l'aide du 
 <li>Cliquer sur le bouton "Quitter édition de l'étape" ou presser la touche "Echappement" pour terminer la création/modification de l'étape et passer en mode supervision.</li>
 <li>Cliquer sur le bouton "Démarrer création nouvelle étape" ou double-cliquer sur la carte pour terminer la création/modification de l'étape en cours et passer en mode création/modification d'une nouvelle étape.</li>
 <li>Double-cliquer sur un point ou une section d'une autre étape pour terminer la création/modification de l'étape en cours et passer en mode édition/modification pour l'autre étape.</li>
-<li>Cliquer sur le boutton "Importer étapes de GPX" ou presser la touche "Ctrl + i" pour importer de nouvelles étapes à partir d'un fichier GPX. Ces étapes s'ajoutent à celles qui figurent déjà dans l'application.</li>
-<li>Cliquer sur le bouton "Exporter l'itinéraire vers GPX" ou presser la touche "Ctrl + e" pour exporter l'itinéraire en cours dans un fichier GPX.</li>
-<li>Cliquer sur le bouton "Réinitialiser l'itinéraire" ou presser la touche "Ctrl + r" pour réinitialiser l'itinéraire (c'est-à-dire en supprimer toutes les étapes).</li>
+<li>Cliquer sur le boutton "Importer étapes de GPX" pour importer de nouvelles étapes à partir d'un fichier GPX. Ces étapes s'ajoutent à celles qui figurent déjà dans l'application.</li>
+<li>Cliquer sur le bouton "Exporter l'itinéraire vers GPX" pour exporter l'itinéraire en cours dans un fichier GPX.</li>
+<li>Cliquer sur le bouton "Réinitialiser l'itinéraire" pour réinitialiser l'itinéraire (c'est-à-dire en supprimer toutes les étapes).</li>
 </ul>
 <h3>Mode supervision</h3>
 <p>Ce mode permet de visualiser les étapes de l'itinéraire sans qu'aucune ne soit en cours de création/modification. Les points de départ et d'arrivée de chaque étape sont représentés, mais pas les points de passage.</p> 
@@ -5122,9 +5081,9 @@ Pour les quatre premiers modes de voyage, le parcours est calculé à l'aide du 
 <ul>
 <li>Cliquer sur le bouton "Démarrer création nouvelle étape" ou double-cliquer sur la carte pour terminer la création/modification de l'étape en cours et passer en mode création/modification d'une nouvelle étape.</li>
 <li>Double-cliquer sur un point ou une section d'une autre étape pour terminer la création/modification de l'étape en cours et passer en mode édition/modification pour l'autre étape.</li>
-<li>Cliquer sur le boutton "Importer étapes de GPX" ou presser la touche "Ctrl + i" pour importer de nouvelles étapes à partir d'un fichier GPX. Ces étapes s'ajoutent à celles qui figurent déjà dans l'application.</li>
-<li>Cliquer sur le bouton "Exporter l'itinéraire vers GPX" ou presser la touche "Ctrl + e" pour exporter l'itinéraire en cours dans un fichier GPX.</li>
-<li>Cliquer sur le bouton "Réinitialiser l'itinéraire" ou presser la touche "Ctrl + r" pour réinitialiser l'itinéraire (c'est-à-dire en supprimer toutes les étapes).</li>
+<li>Cliquer sur le boutton "Importer étapes de GPX" pour importer de nouvelles étapes à partir d'un fichier GPX. Ces étapes s'ajoutent à celles qui figurent déjà dans l'application.</li>
+<li>Cliquer sur le bouton "Exporter l'itinéraire vers GPX" pour exporter l'itinéraire en cours dans un fichier GPX.</li>
+<li>Cliquer sur le bouton "Réinitialiser l'itinéraire" pour réinitialiser l'itinéraire (c'est-à-dire en supprimer toutes les étapes).</li>
 </ul>
 <h2>Divers</h2>
 <p>La langue de l'interface utilisateur peut être choisie : anglais (par défaut) ou français.</p>
@@ -5137,4 +5096,3 @@ Pour les quatre premiers modes de voyage, le parcours est calculé à l'aide du 
     </script>
 </body>
 </html>
-
